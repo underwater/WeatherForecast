@@ -1,0 +1,14 @@
+﻿# Weather Forecast API Sample Requests (Local)
+@host=http://localhost:5000
+
+
+### 1. Get Weather Forecast for Zurich, Switzerland on 2024-05-01
+POST {{host}}/weather
+Content-Type: application/json
+Accept: application/json
+
+{
+  "date": "2024-10-02",
+  "city": "Zurich",
+  "country": "Switzerland"
+}
