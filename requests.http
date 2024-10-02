@@ -1,8 +1,8 @@
 ﻿# Weather Forecast API Sample Requests (Local)
-@host=http://localhost:5000
+#@host=http://localhost:5000
 
 # if running docker image, url is override to port 80 which azure expects
-#@host=http://localhost 
+@host=http://localhost 
 
 
 ### 1. Get Weather Forecast for Zurich, Switzerland on 2024-05-01

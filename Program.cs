@@ -71,8 +71,6 @@ if (app.Environment.IsDevelopment())
     app.UseHttpLogging();
 }
 
-app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
