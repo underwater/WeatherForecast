@@ -364,3 +364,4 @@ FodyWeavers.xsd
 
 # Ignore appsettings.Development.json
 appsettings.Development.json
+deploy-azure.ps1

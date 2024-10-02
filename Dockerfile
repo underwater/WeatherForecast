@@ -4,9 +4,7 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
+EXPOSE 80
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
@@ -26,5 +24,9 @@ RUN dotnet publish "./WeatherForecast.csproj" -c $BUILD_CONFIGURATION -o /app/pu
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
+
+# azure expects the app to listen on port 80, in this demo I do it this way.
+ENV ASPNETCORE_URLS=http://+:80
+
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "WeatherForecast.dll"]

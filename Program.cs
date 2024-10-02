@@ -10,7 +10,7 @@ using Polly.Extensions.Http;
 using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting;
-
+using Microsoft.AspNetCore.HttpLogging;
 
 var retryPolicy = HttpPolicyExtensions
     .HandleTransientHttpError()
@@ -19,39 +19,34 @@ var retryPolicy = HttpPolicyExtensions
 
 var builder = WebApplication.CreateBuilder(args);
 
-// weather API Keys
-builder.Configuration.AddUserSecrets<Program>();
-
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddMemoryCache();
-builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpLogging(logging =>
 {
-    logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
+    logging.LoggingFields = HttpLoggingFields.All;
     logging.RequestBodyLogLimit = 4096;
     logging.ResponseBodyLogLimit = 4096;
 });
 
+// Register configuration
+builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
-// Configuration for API keys
-builder.Services.AddSingleton(builder.Configuration);
-
-// Register the HttpClient with the retry policy
-IHttpClientBuilder httpClientBuilder = builder.Services.AddHttpClient("WeatherClient")
+// Register HttpClient with retry policy
+builder.Services.AddHttpClient("WeatherClient")
     .AddPolicyHandler(retryPolicy);
 
-// Register multiple weather providers
+// Register weather providers
 builder.Services.AddScoped<IWeatherProvider, TomorrowIoProvider>();
 builder.Services.AddScoped<IWeatherProvider, WeatherstackProvider>();
 builder.Services.AddScoped<IWeatherProvider, VisualCrossingProvider>();
 
-
+// Register the concrete WeatherService
 builder.Services.AddScoped<WeatherService>();
 
-// Register the main weather service with caching
+// Register the caching decorator as IWeatherService
 builder.Services.AddScoped<IWeatherService>(provider =>
 {
     var weatherService = provider.GetRequiredService<WeatherService>();
@@ -59,15 +54,20 @@ builder.Services.AddScoped<IWeatherService>(provider =>
     return new CachingWeatherServiceDecorator(weatherService, cache);
 });
 
-
 var app = builder.Build();
 
+// normally we would use the following to configure swagger in development
+// but in this demo, I leave it to verify the swagger is working in production
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Weather Forecast API v1");
+    c.RoutePrefix = string.Empty; // Swagger UI at the app's root
+});
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WeatherForecast API v1"));
     app.UseHttpLogging();
 }
 
